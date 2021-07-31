@@ -16,12 +16,14 @@ TODO:
 ## API
 
 ```go
+package main
+
 import (
     "github.com/tobert/otel-init-go/otelinit"
 )
 
 func main() {
-    otelShutdown := otelinit.InitOpenTelemetry()
+    otelShutdown := otelinit.InitOpenTelemetry("my-amazing-application")
     defer otelShutdown()
 }
 ```
