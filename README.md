@@ -45,5 +45,4 @@ TODO:
 | OTEL_EXPORTER_OTLP_ENDPOINT   | ""              | localhost:4317 |
 | OTEL_EXPORTER_OTLP_INSECURE   | false           | true           |
 | OTEL_EXPORTER_OTLP_HEADERS    | ""              | key=value,k=v  |
-| OTEL_EXPORTER_OTLP_BLOCKING   | false           | true           |
 
