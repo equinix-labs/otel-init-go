@@ -7,11 +7,17 @@ and aims for a small code footprint and get configuration from environment
 variables exclusively. The intent is to be able to drop this into existing
 codebases without minimal code churn.
 
+TODO:
+- [ ] bootstrap egressing traces to a collector
+- [ ] figure out how to test envvar mixes (maybe work on test server to help with this)
+- [ ] metrics support?
+- [ ] logs support?
+
 ## API
 
 ```go
 import (
-    "github.com/tobert/otel-init-go/otelinit
+    "github.com/tobert/otel-init-go/otelinit"
 )
 
 func main() {
