@@ -1,5 +1,7 @@
 # otel-init-go
 
+[ THIS IS A WORK-IN-PROGRESS AND NOT EVEN EXPERIMENTAL YET ]
+
 OpenTelemetry plumbing initializer for Go that only supports OTLP/gRPC
 and aims for a small code footprint and get configuration from environment
 variables exclusively. The intent is to be able to drop this into existing
