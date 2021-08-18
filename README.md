@@ -23,8 +23,9 @@ import (
 )
 
 func main() {
-    otelShutdown := otelinit.InitOpenTelemetry("my-amazing-application")
-    defer otelShutdown()
+    ctx := context.Background()
+    otelShutdown := otelinit.InitOpenTelemetry(ctx, "my-amazing-application")
+    defer otelShutdown(ctx)
 }
 ```
 

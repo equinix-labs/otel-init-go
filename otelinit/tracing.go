@@ -13,9 +13,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func (c config) initTracing() func() {
-	ctx := context.Background()
-
+func (c config) initTracing(ctx context.Context) OtelShutdown {
 	// set the service name that will show up in tracing UIs
 	resAttrs := resource.WithAttributes(semconv.ServiceNameKey.String(c.servicename))
 	res, err := resource.New(ctx, resAttrs)
@@ -52,7 +50,7 @@ func (c config) initTracing() func() {
 	otel.SetTracerProvider(tracerProvider)
 
 	// the public function will wrap this in its own shutdown function
-	return func() {
+	return func(ctx context.Context) {
 		err = tracerProvider.Shutdown(ctx)
 		if err != nil {
 			log.Fatalf("shutdown of OpenTelemetry tracerProvider failed: %s", err)
