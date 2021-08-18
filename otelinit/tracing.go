@@ -53,12 +53,12 @@ func (c config) initTracing(ctx context.Context) OtelShutdown {
 	return func(ctx context.Context) {
 		err = tracerProvider.Shutdown(ctx)
 		if err != nil {
-			log.Fatalf("shutdown of OpenTelemetry tracerProvider failed: %s", err)
+			log.Printf("shutdown of OpenTelemetry tracerProvider failed: %s", err)
 		}
 
 		err = exporter.Shutdown(ctx)
 		if err != nil {
-			log.Fatalf("shutdown of OpenTelemetry OTLP exporter failed: %s", err)
+			log.Printf("shutdown of OpenTelemetry OTLP exporter failed: %s", err)
 		}
 	}
 }
