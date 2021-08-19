@@ -34,6 +34,7 @@ func main() {
 	conf, ok := otelinit.ConfigFromContext(ctx)
 	if !ok {
 		log.Println("failed to retrieve otelinit.Config pointer from context, test results may be invalid")
+		conf = &otelinit.Config{}
 	}
 	sc := span.SpanContext()
 	outData := map[string]map[string]string{
