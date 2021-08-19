@@ -1,15 +1,13 @@
 # otel-init-go
 
-[ THIS IS A WORK-IN-PROGRESS AND NOT EVEN EXPERIMENTAL YET ]
-
 OpenTelemetry plumbing initializer for Go that only supports OTLP/gRPC
 and aims for a small code footprint and gets its configuration from environment
 variables exclusively. The intent is to be able to drop this into existing
 codebases with minimal code churn.
 
 TODO:
-- [ ] bootstrap egressing traces to a collector
-- [ ] figure out how to test envvar mixes (maybe work on test server to help with this)
+- [x] bootstrap egressing traces to a collector
+- [ ] figure out how to test envvar mixes (otel-cli server json)
 - [ ] metrics support?
 - [ ] logs support?
 
@@ -19,7 +17,7 @@ TODO:
 package main
 
 import (
-    "github.com/tobert/otel-init-go/otelinit"
+    "github.com/equinix-labs/otel-init-go/otelinit"
 )
 
 func main() {

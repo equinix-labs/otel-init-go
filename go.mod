@@ -1,4 +1,4 @@
-module github.com/tobert/otel-init-go
+module github.com/equinix-labs/otel-init-go
 
 go 1.15
 
