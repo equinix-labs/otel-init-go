@@ -32,3 +32,16 @@ func InitOpenTelemetry(ctx context.Context, serviceName string) (context.Context
 	// config is available in the returned context (for test/debug)
 	return ctx, func(context.Context) {}
 }
+
+// ConfigFromContext extracts the Config struct from the provided context.
+// Returns the Config and true if it was retried successfully, false otherwise.
+func ConfigFromContext(ctx context.Context) (*Config, bool) {
+	raw := ctx.Value("otel-init-config")
+	if raw != nil {
+		if conf, ok := raw.(*Config); ok {
+			return conf, true
+		}
+	}
+
+	return &Config{}, false
+}

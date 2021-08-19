@@ -32,7 +32,10 @@ func main() {
 
 	// public.go stuffs the config in the context just so we can do this
 	// this is totally unsafe like this and will probably crash on nil
-	conf := ctx.Value("otel-init-config").(*otelinit.Config)
+	conf, ok := otelinit.ConfigFromContext(ctx)
+	if !ok {
+		log.Println("failed to retrieve otelinit.Config pointer from context, test results may be invalid")
+	}
 	sc := span.SpanContext()
 	outData := map[string]map[string]string{
 		"config": {
