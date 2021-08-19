@@ -8,20 +8,27 @@ type OtelShutdown func(context.Context)
 // It requires a context.Context and service name string that is the name of
 // your service or application.
 // TODO: should even this be overrideable via envvars?
-// Returns a func() that encapuslates clean shutdown.
-func InitOpenTelemetry(ctx context.Context, serviceName string) OtelShutdown {
+// Returns context and a func() that encapuslates clean shutdown.
+func InitOpenTelemetry(ctx context.Context, serviceName string) (context.Context, OtelShutdown) {
 	c := newConfig(serviceName)
 
-	if c.endpoint != "" {
-		tracingShutdown := c.initTracing(ctx)
+	// no idea if this is gonna work...
+	// or even if this is a good idea but it would be well out of most folks'
+	// way here and I can snag it from test code without burdening anyone else
+	// and it's a teensy amount of memory
+	ctx = context.WithValue(ctx, "otel-init-config", &c)
+
+	if c.Endpoint != "" {
+		ctx, tracingShutdown := c.initTracing(ctx)
 		// TODO: initMetrics()
 		// TODO: initLogs()
 
-		return func(ctx context.Context) {
+		return ctx, func(ctx context.Context) {
 			tracingShutdown(ctx)
 		}
 	}
 
 	// no configuration, nothing to do, the calling code is inert
-	return func(context.Context) {}
+	// config is available in the returned context (for test/debug)
+	return ctx, func(context.Context) {}
 }
