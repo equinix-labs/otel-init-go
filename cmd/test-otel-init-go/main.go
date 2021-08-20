@@ -1,5 +1,9 @@
 package main
 
+// All this program does is load up otel-init-go, create one trace, dump state
+// in json for all these things, then exit. This data is intended to be consumed
+// in main_test.go, which is really about testing otel-cli-init itself.
+
 import (
 	"context"
 	"encoding/json"
