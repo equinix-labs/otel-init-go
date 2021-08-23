@@ -58,6 +58,7 @@ type StubData struct {
 // are found in json files in this directory.
 type Scenario struct {
 	Name          string            `json:"name"`
+	Filename      string            `json:"-"`
 	StubEnv       map[string]string `json:"stub_env"`  // given to stub
 	StubData      StubData          `json:"stub_data"` // data from stub, exact match
 	SpansExpected int               `json:"spans_expected"`
@@ -78,7 +79,7 @@ func TestOtelInit(t *testing.T) {
 	// get a list of all json files in this directory
 	// https://dave.cheney.net/2016/05/10/test-fixtures-in-go
 	wd, _ := os.Getwd()
-	files, err := ioutil.ReadDir(wd)
+	files, err := ioutil.ReadDir(filepath.Join(wd, "testdata"))
 	if err != nil {
 		t.Fatalf("Failed to list test directory %q to detect json files.", wd)
 	}
@@ -87,7 +88,8 @@ func TestOtelInit(t *testing.T) {
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".json") {
 			scenario := Scenario{StubEnv: map[string]string{}}
-			js, err := os.ReadFile(file.Name())
+			fp := filepath.Join("testdata", file.Name())
+			js, err := os.ReadFile(fp)
 			if err != nil {
 				t.Fatalf("Failed to read json test file %q: %s", file.Name(), err)
 			}
@@ -95,23 +97,20 @@ func TestOtelInit(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to parse json test file %q: %s", file.Name(), err)
 			}
+			scenario.Filename = filepath.Base(file.Name()) // for error reporting
 			scenarios = append(scenarios, scenario)
 		}
 	}
 
 	t.Logf("Loaded %d tests.", len(scenarios))
+	if len(scenarios) == 0 {
+		t.Fatal("no test fixtures loaded!")
+	}
 
 	// run all the scenarios
 	for _, s := range scenarios {
 		stubData, events := runPrograms(t, s)
 		checkData(t, s, stubData, events)
-
-		// temporary debug print
-		for tid, trace := range events {
-			for sid, span := range trace {
-				t.Logf("trace id %s span id %s is %q", tid, sid, span)
-			}
-		}
 	}
 }
 
@@ -120,7 +119,7 @@ func TestOtelInit(t *testing.T) {
 func checkData(t *testing.T, scenario Scenario, stubData StubData, events CliEvents) {
 	// check the env
 	if !reflect.DeepEqual(stubData.Env, scenario.StubData.Env) {
-		t.Log("env in stub output did not match test fixture")
+		t.Logf("env in stub output did not match test fixture in %q", stubData)
 		t.Fail()
 	}
 
@@ -180,8 +179,6 @@ func runPrograms(t *testing.T, scenario Scenario) (StubData, CliEvents) {
 	if err != nil {
 		t.Fatalf("Executing stub command %q failed: %s", stub.String(), err)
 	}
-
-	fmt.Printf("\n\n%s\n\n", string(stubOut))
 
 	stubData := StubData{
 		Config: map[string]string{},
