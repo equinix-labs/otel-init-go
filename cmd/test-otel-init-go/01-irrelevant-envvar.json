@@ -9,7 +9,9 @@
          "insecure": "false",
          "service_name": "otel-init-go-test"
       },
-      "env": {},
+      "env": {
+         "UNRELATED_ENVVAR": "unrelated data"
+      },
       "otel": {
          "is_sampled": "false",
          "span_id": "0000000000000000",

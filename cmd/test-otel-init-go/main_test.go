@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -114,9 +115,26 @@ func TestOtelInit(t *testing.T) {
 	}
 }
 
-// TODO: write these checks :)
+// checkData takes the data returned from the stub and compares it to the
+// preset data in the scenario and fails the tests if anything doesn't match.
 func checkData(t *testing.T, scenario Scenario, stubData StubData, events CliEvents) {
+	// check the env
+	if !reflect.DeepEqual(stubData.Env, scenario.StubData.Env) {
+		t.Log("env in stub output did not match test fixture")
+		t.Fail()
+	}
 
+	// check the otel-init-go config
+	if !reflect.DeepEqual(stubData.Config, scenario.StubData.Config) {
+		t.Log("config in stub output did not match test fixture")
+		t.Fail()
+	}
+
+	// check the otel span values
+	if !reflect.DeepEqual(stubData.Otel, scenario.StubData.Otel) {
+		t.Log("span in stub output did not match test fixture")
+		t.Fail()
+	}
 }
 
 // runPrograms runs the stub program and otel-cli together and captures their
