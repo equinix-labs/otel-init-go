@@ -1,0 +1,28 @@
+{
+   "name": "local server without tls",
+   "stub_env": {
+      "OTEL_EXPORTER_OTLP_ENDPOINT": "localhost:4317",
+      "OTEL_EXPORTER_OTLP_INSECURE": "true"
+   },
+   "stub_data": {
+      "config": {
+         "endpoint": "localhost:4317",
+         "insecure": "true",
+         "service_name": "otel-init-go-test"
+      },
+      "env": {
+      	"OTEL_EXPORTER_OTLP_ENDPOINT": "localhost:4317",
+      	"OTEL_EXPORTER_OTLP_INSECURE": "true"
+      },
+      "otel": {
+         "is_sampled": "true",
+         "span_id": "*",
+         "trace_flags": "01",
+         "trace_id": "*"
+      }
+   },
+   "spans_expected": 1,
+   "timeout": 1,
+   "should_timeout": false,
+   "skip_otel_cli": false 
+}

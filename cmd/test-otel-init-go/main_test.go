@@ -20,11 +20,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // CliEvent is mostly the same as otel-cli's internal event format, with
@@ -48,10 +50,11 @@ type CliEvents map[string]map[string]CliEvent
 
 // StubData is the structure of the data that the stub program
 // prints out.
+type StubSpan map[string]string
 type StubData struct {
 	Config map[string]string `json:"config"`
 	Env    map[string]string `json:"env"`
-	Otel   map[string]string `json:"otel"`
+	Otel   StubSpan          `json:"otel"`
 }
 
 // Scenario represents the configuration of a test scenario. Scenarios
@@ -76,7 +79,7 @@ func TestMain(m *testing.M) {
 // TestOtelInit loads all the json files in this directory and executes the
 // tests they define.
 func TestOtelInit(t *testing.T) {
-	// get a list of all json files in this directory
+	// get a list of all json fixtures in the testdata directory
 	// https://dave.cheney.net/2016/05/10/test-fixtures-in-go
 	wd, _ := os.Getwd()
 	files, err := ioutil.ReadDir(filepath.Join(wd, "testdata"))
@@ -107,7 +110,7 @@ func TestOtelInit(t *testing.T) {
 		t.Fatal("no test fixtures loaded!")
 	}
 
-	// run all the scenarios
+	// run all the scenarios, check the results
 	for _, s := range scenarios {
 		stubData, events := runPrograms(t, s)
 		checkData(t, s, stubData, events)
@@ -118,23 +121,69 @@ func TestOtelInit(t *testing.T) {
 // preset data in the scenario and fails the tests if anything doesn't match.
 func checkData(t *testing.T, scenario Scenario, stubData StubData, events CliEvents) {
 	// check the env
-	if !reflect.DeepEqual(stubData.Env, scenario.StubData.Env) {
-		t.Logf("env in stub output did not match test fixture in %q", stubData)
-		t.Fail()
+	if diff := cmp.Diff(scenario.StubData.Env, stubData.Env); diff != "" {
+		t.Errorf("env data did not match fixture in %q (-want +got):\n%s", scenario.Filename, diff)
 	}
 
 	// check the otel-init-go config
-	if !reflect.DeepEqual(stubData.Config, scenario.StubData.Config) {
-		t.Log("config in stub output did not match test fixture")
-		t.Fail()
+	if diff := cmp.Diff(scenario.StubData.Config, stubData.Config); diff != "" {
+		t.Errorf("config data did not match fixture in %q (-want +got):\n%s", scenario.Filename, diff)
 	}
 
 	// check the otel span values
-	if !reflect.DeepEqual(stubData.Otel, scenario.StubData.Otel) {
-		t.Log("span in stub output did not match test fixture")
-		t.Fail()
+	// find usages of *, do the check on the stub data manually, and set up cmpSpan
+	scSpan := map[string]string{}  // to be passed to cmp.Diff
+	cmpSpan := map[string]string{} // to be passed to cmp.Diff
+	for what, re := range map[string]*regexp.Regexp{
+		"trace_id":    regexp.MustCompile("^[0-9a-fA-F]{32}$"),
+		"span_id":     regexp.MustCompile("^[0-9a-fA-F]{16}$"),
+		"is_sampled":  regexp.MustCompile("^true|false$"),
+		"trace_flags": regexp.MustCompile("^[0-9]{2}$"),
+	} {
+		if cv, ok := scenario.StubData.Otel[what]; ok {
+			scSpan[what] = cv // make a straight copy to make cmp.Diff happy
+			if sv, ok := stubData.Otel[what]; ok {
+				cmpSpan[what] = sv // default to the existing value
+				if cv == "*" {
+					if re.MatchString(sv) {
+						cmpSpan[what] = "*" // success!, make the Cmp test succeed
+					} else {
+						t.Errorf("stub span value %q for key %s is not valid", sv, what)
+					}
+				}
+			}
+		}
+	}
+
+	// do a diff on a generated map that sets values to * when the * check succeeded
+	if diff := cmp.Diff(scSpan, cmpSpan); diff != "" {
+		t.Errorf("otel data did not match fixture in %q (-want +got):\n%s", scenario.Filename, diff)
 	}
 }
+
+// checkOtelSplat is a helper for checking trace and span id in the otel output
+// so that the fixtures can put "*" in those fields to mean "any valid-looking id"
+// TODO: maybe can use cmp custom comparator to implement this cleaner in the diff
+/*
+func checkOtelSplat(t *testing.T, what string, re *regexp.Regexp, scenario Scenario, stubData *StubData) bool {
+	if v, ok := scenario.StubData.Otel[what]; ok {
+		if v == "*" {
+			if sv, ok := stubData.Otel[what]; ok {
+				if re.MatchString(sv) {
+					// override the * so the following diff test passes ok
+					scenario.StubData.Otel[what] = sv
+
+					return true
+				} else {
+					t.Errorf("%s id %q does not look like a valid id", what, sv)
+				}
+			}
+		}
+	}
+
+	return false
+}
+*/
 
 // runPrograms runs the stub program and otel-cli together and captures their
 // output as data to return for further testing.
@@ -159,11 +208,13 @@ func runPrograms(t *testing.T, scenario Scenario) (StubData, CliEvents) {
 	// MAYBE: server json --stdout is maybe better? and could add a graceful exit on closed fds
 	// TODO: obviously this is horrible
 	otelcli := exec.Command("/home/atobey/src/otel-cli/otel-cli", cliArgs...)
+	otelcli.Env = []string{"PATH=/bin"} // apparently this is required for 'getent', no idea why
 
 	if !scenario.SkipOtelCli {
 		go func() {
-			err = otelcli.Run()
+			err, output := otelcli.CombinedOutput()
 			if err != nil {
+				log.Println(output)
 				log.Fatalf("Executing command %q failed: %s", otelcli.String(), err)
 			}
 		}()
