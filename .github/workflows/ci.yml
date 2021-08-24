@@ -17,8 +17,9 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Install otel-cli for tests
-        uses: jaxxstorm/action-install-gh-release@release/v1-alpha
+        uses: engineerd/configurator@v0.0.8
         with:
-          repo: equinix-labs/otel-cli
+          name: "otel-cli"
+          url: "https://github.com/equinix-labs/otel-cli/releases/download/v0.0.5/otel-cli-0.0.5-Linux-x86_64.tar.gz"
       - name: Test
         run: go test -v ./...
