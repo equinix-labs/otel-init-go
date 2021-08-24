@@ -14,12 +14,17 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
-      - name: Build
-        run: go build -v ./...
-      - name: Install otel-cli for tests
         uses: engineerd/configurator@v0.0.8
         with:
           name: "otel-cli"
-          url: "https://github.com/equinix-labs/otel-cli/releases/download/v0.0.5/otel-cli-0.0.5-Linux-x86_64.tar.gz"
+          pathInArchive: /otel-cli
+          fromGitHubReleases: "true"
+          repo: equinix-labs/otel-cli
+          version: "^v0.0.5"
+          urlTemplate: "https://github.com/equinix-labs/otel-cli/releases/download/{{ version }}/otel-cli-{{ version }}-Linux-x86_64.tar.gz"
+          token: ${{ secrets.GTIHUB_TOKEN }}
+      - name: Build
+        run: go build -v ./...
+      - name: Install otel-cli for tests
       - name: Test
         run: go test -v ./...
