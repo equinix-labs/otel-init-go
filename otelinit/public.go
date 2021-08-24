@@ -2,6 +2,9 @@ package otelinit
 
 import "context"
 
+// OtelShutdown is a function that should be called with context
+// when you want to shut down OpenTelemetry, usually as a defer
+// in main.
 type OtelShutdown func(context.Context)
 
 // InitOpenTelemetry sets up the OpenTelemetry plumbing so it's ready to use.
