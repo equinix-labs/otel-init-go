@@ -195,7 +195,6 @@ func runPrograms(t *testing.T, scenario Scenario) (StubData, CliEvents) {
 	}
 
 	// MAYBE: server json --stdout is maybe better? and could add a graceful exit on closed fds
-	// TODO: obviously this is horrible
 	otelcli := exec.Command(otelCliPath, cliArgs...)
 	otelcli.Env = []string{"PATH=/bin"} // apparently this is required for 'getent', no idea why
 
@@ -209,10 +208,13 @@ func runPrograms(t *testing.T, scenario Scenario) (StubData, CliEvents) {
 		}()
 	}
 
-	// yes yes I know this is horrible
+	// TODO: replace this with something more reliable
+	// the problem here is we need to wait for otel-cli to start and listen
+	// so the solution is probably to do some kind of healthcheck on otel-cli's port
+	// but this works ok for now
 	time.Sleep(time.Millisecond * 10)
 
-	// TODO: obviously this is horrible
+	// run the stub with the scenario's environment
 	stub := exec.Command(testStubPath)
 	stub.Env = mkEnviron(scenario.StubEnv)
 	stubOut, err := stub.Output()
