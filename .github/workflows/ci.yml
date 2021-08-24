@@ -14,6 +14,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
+      - name: Install otel-cli for tests
         uses: engineerd/configurator@v0.0.8
         with:
           name: "otel-cli"
@@ -25,6 +26,5 @@ jobs:
           token: ${{ secrets.GTIHUB_TOKEN }}
       - name: Build
         run: go build -v ./...
-      - name: Install otel-cli for tests
       - name: Test
         run: go test -v ./...
