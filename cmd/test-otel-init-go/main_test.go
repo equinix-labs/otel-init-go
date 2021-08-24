@@ -80,27 +80,9 @@ func TestMain(m *testing.M) {
 		log.Fatalf("cannot run tests: otel-cli must be in PATH: %s", err)
 	}
 
-	// this is an unusual test in that it needs the command built
-	// to run so we do that here
-	goCmdPath, err := exec.LookPath("go")
-	if err != nil {
-		log.Fatalf("could not locate 'go' command in PATH: %s", err)
-	}
-	// should already be in the right directory
-	err = exec.Command(goCmdPath, "build").Run()
-	if err != nil {
-		log.Fatalf("failed to build stub program: %s", err)
-	}
-	// hacky: add cwd to PATH so we can do a lookup, mostly because this
-	// gets around e.g. Windows.exe
+	// it is expected that the stub binary has already been built and CI does this
 	wd, _ := os.Getwd()
-	path := os.Getenv("PATH")
-	os.Setenv("PATH", wd+string(os.PathListSeparator)+path)
-	// finally, set the var
-	testStubPath, err = exec.LookPath("test-otel-init-go")
-	if err != nil {
-		log.Fatalf("could not locate 'test-otel-init-go' command in PATH: %s", err)
-	}
+	testStubPath = filepath.Join(wd, "test-otel-init-go")
 
 	// wipe out this process's envvars right away to avoid pollution & leakage
 	os.Clearenv()
