@@ -28,7 +28,12 @@ func main() {
 	for _, e := range os.Environ() {
 		parts := strings.SplitN(e, "=", 2)
 		if len(parts) == 2 {
-			env[parts[0]] = parts[1]
+			// it's not great to hard-code a specific envvar here but this is
+			// probably the most dangerous one we don't want to blithely print
+			// here. open to suggestions...
+			if !strings.HasPrefix(parts[0], "GITHUB") {
+				env[parts[0]] = parts[1]
+			}
 		} else {
 			log.Fatalf("BUG this shouldn't happen")
 		}
