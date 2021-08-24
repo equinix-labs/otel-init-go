@@ -7,7 +7,6 @@ package main
 // pan out but the first part is looking good
 //
 // TODOs:
-// [ ] write data tests
 // [ ] replace that time.Sleep with proper synchronization
 // [ ] use random ports for listener address?
 
@@ -70,7 +69,39 @@ type Scenario struct {
 	SkipOtelCli   bool              `json:"skip_otel_cli"`  // don't run otel-cli at all
 }
 
+// needs to be discovered right at startup before env is cleared
+var otelCliPath, testStubPath string
+
 func TestMain(m *testing.M) {
+	// find otel-cli in PATH before clearing the environment
+	var err error
+	otelCliPath, err = exec.LookPath("otel-cli")
+	if err != nil {
+		log.Fatalf("cannot run tests: otel-cli must be in PATH: %s", err)
+	}
+
+	// this is an unusual test in that it needs the command built
+	// to run so we do that here
+	goCmdPath, err := exec.LookPath("go")
+	if err != nil {
+		log.Fatalf("could not locate 'go' command in PATH: %s", err)
+	}
+	// should already be in the right directory
+	err = exec.Command(goCmdPath, "build").Run()
+	if err != nil {
+		log.Fatalf("failed to build stub program: %s", err)
+	}
+	// hacky: add cwd to PATH so we can do a lookup, mostly because this
+	// gets around e.g. Windows.exe
+	wd, _ := os.Getwd()
+	path := os.Getenv("PATH")
+	os.Setenv("PATH", wd+string(os.PathListSeparator)+path)
+	// finally, set the var
+	testStubPath, err = exec.LookPath("test-otel-init-go")
+	if err != nil {
+		log.Fatalf("could not locate 'test-otel-init-go' command in PATH: %s", err)
+	}
+
 	// wipe out this process's envvars right away to avoid pollution & leakage
 	os.Clearenv()
 	os.Exit(m.Run())
@@ -161,30 +192,6 @@ func checkData(t *testing.T, scenario Scenario, stubData StubData, events CliEve
 	}
 }
 
-// checkOtelSplat is a helper for checking trace and span id in the otel output
-// so that the fixtures can put "*" in those fields to mean "any valid-looking id"
-// TODO: maybe can use cmp custom comparator to implement this cleaner in the diff
-/*
-func checkOtelSplat(t *testing.T, what string, re *regexp.Regexp, scenario Scenario, stubData *StubData) bool {
-	if v, ok := scenario.StubData.Otel[what]; ok {
-		if v == "*" {
-			if sv, ok := stubData.Otel[what]; ok {
-				if re.MatchString(sv) {
-					// override the * so the following diff test passes ok
-					scenario.StubData.Otel[what] = sv
-
-					return true
-				} else {
-					t.Errorf("%s id %q does not look like a valid id", what, sv)
-				}
-			}
-		}
-	}
-
-	return false
-}
-*/
-
 // runPrograms runs the stub program and otel-cli together and captures their
 // output as data to return for further testing.
 // all failures are fatal, no point in testing if this is broken
@@ -207,7 +214,7 @@ func runPrograms(t *testing.T, scenario Scenario) (StubData, CliEvents) {
 
 	// MAYBE: server json --stdout is maybe better? and could add a graceful exit on closed fds
 	// TODO: obviously this is horrible
-	otelcli := exec.Command("/home/atobey/src/otel-cli/otel-cli", cliArgs...)
+	otelcli := exec.Command(otelCliPath, cliArgs...)
 	otelcli.Env = []string{"PATH=/bin"} // apparently this is required for 'getent', no idea why
 
 	if !scenario.SkipOtelCli {
@@ -224,7 +231,7 @@ func runPrograms(t *testing.T, scenario Scenario) (StubData, CliEvents) {
 	time.Sleep(time.Millisecond * 10)
 
 	// TODO: obviously this is horrible
-	stub := exec.Command("/home/atobey/src/otel-init-go/cmd/test-otel-init-go/test-otel-init-go")
+	stub := exec.Command(testStubPath)
 	stub.Env = mkEnviron(scenario.StubEnv)
 	stubOut, err := stub.Output()
 	if err != nil {
