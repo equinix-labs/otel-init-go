@@ -19,11 +19,7 @@ jobs:
         with:
           name: "otel-cli"
           pathInArchive: /otel-cli
-          fromGitHubReleases: "true"
-          repo: equinix-labs/otel-cli
-          version: "^v0.0.5"
-          urlTemplate: "https://github.com/equinix-labs/otel-cli/releases/download/{{ version }}/otel-cli-{{ version }}-Linux-x86_64.tar.gz"
-          token: ${{ secrets.GTIHUB_TOKEN }}
+          url: "https://github.com/equinix-labs/otel-cli/releases/download/v0.0.5/otel-cli-0.0.5-Linux-x86_64.tar.gz"
       - name: Build
         run: go build -v ./...
       - name: Test
