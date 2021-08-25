@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Build otelinit
+        run: go build -v ./...
+      - name: Build test stub
+        working-directory: ./cmd/test-otel-init-go
+        run: go build -v
+      - name: Install otel-cli for tests
+        uses: engineerd/configurator@v0.0.8
+        with:
+          name: "otel-cli"
+          pathInArchive: /otel-cli
+          url: "https://github.com/equinix-labs/otel-cli/releases/download/v0.0.5/otel-cli-0.0.5-Linux-x86_64.tar.gz"
+      - name: Test
+        run: go test -v ./...

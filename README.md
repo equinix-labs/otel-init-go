@@ -22,7 +22,7 @@ import (
 
 func main() {
     ctx := context.Background()
-    otelShutdown := otelinit.InitOpenTelemetry(ctx, "my-amazing-application")
+    ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "my-amazing-application")
     defer otelShutdown(ctx)
 }
 ```

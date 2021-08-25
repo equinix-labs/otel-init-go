@@ -13,16 +13,16 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func (c config) initTracing(ctx context.Context) OtelShutdown {
+func (c Config) initTracing(ctx context.Context) (context.Context, OtelShutdown) {
 	// set the service name that will show up in tracing UIs
-	resAttrs := resource.WithAttributes(semconv.ServiceNameKey.String(c.servicename))
+	resAttrs := resource.WithAttributes(semconv.ServiceNameKey.String(c.Servicename))
 	res, err := resource.New(ctx, resAttrs)
 	if err != nil {
 		log.Fatalf("failed to create OpenTelemetry service name resource: %s", err)
 	}
 
-	grpcOpts := []otlpgrpc.Option{otlpgrpc.WithEndpoint(c.endpoint)}
-	if c.insecure {
+	grpcOpts := []otlpgrpc.Option{otlpgrpc.WithEndpoint(c.Endpoint)}
+	if c.Insecure {
 		grpcOpts = append(grpcOpts, otlpgrpc.WithInsecure())
 	} else {
 		creds := credentials.NewClientTLSFromCert(nil, "")
@@ -50,7 +50,7 @@ func (c config) initTracing(ctx context.Context) OtelShutdown {
 	otel.SetTracerProvider(tracerProvider)
 
 	// the public function will wrap this in its own shutdown function
-	return func(ctx context.Context) {
+	return ctx, func(ctx context.Context) {
 		err = tracerProvider.Shutdown(ctx)
 		if err != nil {
 			log.Printf("shutdown of OpenTelemetry tracerProvider failed: %s", err)

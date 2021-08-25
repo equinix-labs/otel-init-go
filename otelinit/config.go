@@ -6,16 +6,18 @@ import (
 	"strconv"
 )
 
-// config holds the typed values of configuration read from environment variables
-type config struct {
-	servicename string
-	endpoint    string
-	insecure    bool
+// Config holds the typed values of configuration read from the environment.
+// It is public mainly to make testing easier and most users should never
+// use it directly.
+type Config struct {
+	Servicename string `json:"service_name"`
+	Endpoint    string `json:"endpoint"`
+	Insecure    bool   `json:"insecure"`
 }
 
 // newConfig reads all of the documented environment variables and returns a
 // config struct.
-func newConfig(serviceName string) config {
+func newConfig(serviceName string) Config {
 	// Use stdlib to parse. If it's an invalid value and doesn't parse, log it
 	// and keep going. It should already be false on error but we force it to
 	// be extra clear that it's failing closed.
@@ -32,9 +34,9 @@ func newConfig(serviceName string) config {
 		insecure = false
 	}
 
-	return config{
-		servicename: serviceName,
-		endpoint:    os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
-		insecure:    insecure,
+	return Config{
+		Servicename: serviceName,
+		Endpoint:    os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+		Insecure:    insecure,
 	}
 }

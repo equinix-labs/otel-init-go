@@ -1,0 +1,26 @@
+{
+   "name": "one unrelated envvar",
+   "stub_env": {
+      "UNRELATED_ENVVAR": "unrelated data"
+   },
+   "stub_data": {
+      "config": {
+         "endpoint": "",
+         "insecure": "false",
+         "service_name": "otel-init-go-test"
+      },
+      "env": {
+         "UNRELATED_ENVVAR": "unrelated data"
+      },
+      "otel": {
+         "is_sampled": "false",
+         "span_id": "0000000000000000",
+         "trace_flags": "00",
+         "trace_id": "00000000000000000000000000000000"
+      }
+   },
+   "spans_expected": 0,
+   "timeout": 0,
+   "should_timeout": false,
+   "skip_otel_cli": true
+}
