@@ -27,7 +27,8 @@ func ContextWithEnvTraceparent(ctx context.Context) context.Context {
 // command line option and returns the context with that value as traceparent
 // if it's there. Does no validation. Returns the original context if there is
 // no cmdline option or if there's an error doing the read.
-func ContextWithLinuxCmdlineTraceparent(ctx context.Context) context.Context {
+// This is Linux-only but should be safe on other operating systems.
+func ContextWithCmdlineTraceparent(ctx context.Context) context.Context {
 	tp, err := tpFromCmdline("/proc/cmdline")
 	if err != nil {
 		// what to do with error? is there a way to hit the otel error handler infra?
@@ -43,7 +44,7 @@ func ContextWithLinuxCmdlineTraceparent(ctx context.Context) context.Context {
 // the original context is returned as-is.
 func ContextWithCmdlineOrEnvTraceparent(ctx context.Context) context.Context {
 	ctx = ContextWithEnvTraceparent(ctx)
-	return ContextWithLinuxCmdlineTraceparent(ctx)
+	return ContextWithCmdlineTraceparent(ctx)
 }
 
 // ContextWithTraceparentString takes a W3C traceparent string, uses the otel
@@ -53,6 +54,15 @@ func ContextWithTraceparentString(ctx context.Context, traceparent string) conte
 	carrier.Set("traceparent", traceparent)
 	prop := otel.GetTextMapPropagator()
 	return prop.Extract(ctx, carrier)
+}
+
+// TraceparentStringFromContext gets the current trace from the context and
+// returns a W3C traceparent string.
+func TraceparentStringFromContext(ctx context.Context) string {
+	carrier := SimpleCarrier{}
+	prop := otel.GetTextMapPropagator()
+	prop.Inject(ctx, carrier)
+	return carrier.Get("traceparent")
 }
 
 // tpFromCmdline reads a /proc/cmdline style file, parses it, and returns whatever
