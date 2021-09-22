@@ -26,8 +26,7 @@ func TestSimpleCarrier(t *testing.T) {
 	tp := "00-b122b620341449410b9cd900c96d459d-aa21cda35388b694-01"
 	carrier.Set("traceparent", tp)
 
-	// even though 2 keys have been set at this point, the carrier only returns
-	// one key, traceparent
+	// we've set 2 keys so far, and both should get returned
 	keys := carrier.Keys()
 	if len(keys) != 2 {
 		t.Errorf("expected exactly 2 keys from Keys() but instead got %q", keys)
