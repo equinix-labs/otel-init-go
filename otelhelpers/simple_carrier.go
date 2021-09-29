@@ -6,7 +6,8 @@ package otelhelpers
 // but since we're not doing anything else with it, it's fine for this.
 type SimpleCarrier map[string]string
 
-// Get implements the otel interface for propagation.
+// Get implements the otel interface for propagation. Returns empty
+// string if the key doesn't exist.
 func (otp SimpleCarrier) Get(key string) string {
 	if v, ok := otp[key]; ok {
 		return v
