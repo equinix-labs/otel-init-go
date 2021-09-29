@@ -8,7 +8,10 @@ type SimpleCarrier map[string]string
 
 // Get implements the otel interface for propagation.
 func (otp SimpleCarrier) Get(key string) string {
-	return otp[key]
+	if v, ok := otp[key]; ok {
+		return v
+	}
+	return ""
 }
 
 // Set implements the otel interface for propagation.
