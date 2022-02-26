@@ -5,11 +5,10 @@ and aims for a small code footprint and gets its configuration from environment
 variables exclusively. The intent is to be able to drop this into existing
 codebases with minimal code churn.
 
-TODO:
-- [x] bootstrap egressing traces to a collector
-- [ ] figure out how to test envvar mixes (otel-cli server json)
-- [ ] metrics support?
-- [ ] logs support?
+There is also an otelhelpers package in `github.com/equinix-labs/otel-init-go/otelinit`
+to help with traceparent propagation. The propagation helpers depend on OTel
+`otel.SetTextMapPropagator()` having been called. `otelinit.InitOpenTelemetry`
+does this for you.
 
 ## API
 
@@ -35,6 +34,14 @@ standards.
 If `OTEL_EXPORTER_OTLP_ENDPOINT` is unset or empty, the init code will
 do almost nothing, so it's as safe as possible to add this to a service,
 deploy it, and configure it later.
+
+To send traces to a localhost OTLP server without encryption, you will need to
+set both OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_EXPORTER_OTLP_INSECURE.
+
+```sh
+export OTEL_EXPORTER_OTLP_ENDPOINT="localhost:4317"
+export OTEL_EXPORTER_OTLP_INSECURE=true
+```
 
 TODO:
 - [ ] add config for TLS auth
