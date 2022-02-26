@@ -74,3 +74,14 @@ func TestTpFromCmdline(t *testing.T) {
 		}
 	}
 }
+
+func TestContextWithTraceparentString(t *testing.T) {
+	testTp := "00-f61fc53f926e07a9c3893b1a722e1b65-7a2d6a804f3de137-01"
+
+	ctx := ContextWithTraceparentString(context.Background(), testTp)
+	tp := TraceparentStringFromContext(ctx)
+
+	if tp != testTp {
+		t.Errorf("expected %q got %q", testTp, tp)
+	}
+}
