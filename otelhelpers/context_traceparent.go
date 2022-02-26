@@ -15,6 +15,7 @@ import (
 // environment variable and if it's set, it grabs the traceparent and
 // adds it to the context it returns. When there is no envvar or it's
 // empty, the original context is returned unmodified.
+// Depends on global OTel TextMapPropagator.
 func ContextWithEnvTraceparent(ctx context.Context) context.Context {
 	traceparent := os.Getenv("TRACEPARENT")
 	if traceparent != "" {
@@ -28,6 +29,7 @@ func ContextWithEnvTraceparent(ctx context.Context) context.Context {
 // if it's there. Does no validation. Returns the original context if there is
 // no cmdline option or if there's an error doing the read.
 // This is Linux-only but should be safe on other operating systems.
+// Depends on global OTel TextMapPropagator.
 func ContextWithCmdlineTraceparent(ctx context.Context) context.Context {
 	tp, err := tpFromCmdline("/proc/cmdline")
 	if err != nil {
@@ -42,6 +44,7 @@ func ContextWithCmdlineTraceparent(ctx context.Context) context.Context {
 // then /proc/cmdline and returns a context with them set, if available. When
 // both are present, the cmdline is prioritized. When neither is present,
 // the original context is returned as-is.
+// Depends on global OTel TextMapPropagator.
 func ContextWithCmdlineOrEnvTraceparent(ctx context.Context) context.Context {
 	ctx = ContextWithEnvTraceparent(ctx)
 	return ContextWithCmdlineTraceparent(ctx)
@@ -49,6 +52,7 @@ func ContextWithCmdlineOrEnvTraceparent(ctx context.Context) context.Context {
 
 // ContextWithTraceparentString takes a W3C traceparent string, uses the otel
 // carrier code to get it into a context it returns ready to go.
+// Depends on global OTel TextMapPropagator.
 func ContextWithTraceparentString(ctx context.Context, traceparent string) context.Context {
 	carrier := SimpleCarrier{}
 	carrier.Set("traceparent", traceparent)
@@ -57,7 +61,7 @@ func ContextWithTraceparentString(ctx context.Context, traceparent string) conte
 }
 
 // TraceparentStringFromContext gets the current trace from the context and
-// returns a W3C traceparent string.
+// returns a W3C traceparent string. Depends on global OTel TextMapPropagator.
 func TraceparentStringFromContext(ctx context.Context) string {
 	carrier := SimpleCarrier{}
 	prop := otel.GetTextMapPropagator()
