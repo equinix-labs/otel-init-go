@@ -11,6 +11,7 @@ package main
 // [ ] use random ports for listener address?
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -44,7 +45,7 @@ type CliEvent struct {
 	Events     []CliEvent        // reader code will stuff kind=event in here
 }
 
-//                 tid        sid
+// --------------- tid        sid
 type CliEvents map[string]map[string]CliEvent
 
 // StubData is the structure of the data that the stub program
@@ -196,13 +197,18 @@ func runPrograms(t *testing.T, scenario Scenario) (StubData, CliEvents) {
 
 	// MAYBE: server json --stdout is maybe better? and could add a graceful exit on closed fds
 	otelcli := exec.Command(otelCliPath, cliArgs...)
-	otelcli.Env = []string{"PATH=/bin"} // apparently this is required for 'getent', no idea why
+	otelcli.Env = []string{"PATH=/bin"} // apparently PATH=/bin is required for 'getent', no idea why
+	var b bytes.Buffer
+	otelcli.Stdout = &b
+	otelcli.Stderr = &b
 
 	if !scenario.SkipOtelCli {
+		// run otel-cli server in the background
 		go func() {
-			err, output := otelcli.CombinedOutput()
+			err := otelcli.Start()
+			otelcli.Wait() // don't check error, it's fast and errors a lot for no reason
 			if err != nil {
-				log.Println(output)
+				log.Println(b.String())
 				log.Fatalf("Executing command %q failed: %s", otelcli.String(), err)
 			}
 		}()
