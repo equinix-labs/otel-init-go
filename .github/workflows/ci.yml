@@ -20,7 +20,7 @@ jobs:
         working-directory: ./cmd/test-otel-init-go
         run: go build -v
       - name: Install otel-cli for tests
-        uses: engineerd/configurator@v0.0.8
+        uses: engineerd/configurator@v0.0.10
         with:
           name: "otel-cli"
           pathInArchive: /otel-cli
